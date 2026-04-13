@@ -1,43 +1,67 @@
 const express = require('express');
-let books = require("./booksdb.js");
-let isValid = require("./auth_users.js").isValid;
-let users = require("./auth_users.js").users;
+const axios = require('axios');
 const public_users = express.Router();
 
+const booksURL = "http://localhost:3000/books";
 
-public_users.post("/register", (req,res) => {
-  //Write your code here
-  return res.status(300).json({message: "Yet to be implemented"});
+// Get all books (async/await)
+public_users.get('/async/books', async (req, res) => {
+    try {
+        const response = await axios.get(booksURL);
+        return res.status(200).json(response.data);
+    } catch (err) {
+        return res.status(500).json({ message: "Error fetching books" });
+    }
 });
 
-// Get the book list available in the shop
-public_users.get('/',function (req, res) {
-  //Write your code here
-  return res.status(300).json({message: "Yet to be implemented"});
+// Get book by ISBN (Promises)
+public_users.get('/isbn/:isbn', (req, res) => {
+    const isbn = req.params.isbn;
+
+    axios.get(`${booksURL}`)
+        .then(response => {
+            const book = response.data[isbn];
+            if (book) {
+                res.json(book);
+            } else {
+                res.status(404).json({ message: "Book not found" });
+            }
+        })
+        .catch(() => {
+            res.status(500).json({ message: "Error fetching book" });
+        });
 });
 
-// Get book details based on ISBN
-public_users.get('/isbn/:isbn',function (req, res) {
-  //Write your code here
-  return res.status(300).json({message: "Yet to be implemented"});
- });
-  
-// Get book details based on author
-public_users.get('/author/:author',function (req, res) {
-  //Write your code here
-  return res.status(300).json({message: "Yet to be implemented"});
+// Get books by Author (async)
+public_users.get('/author/:author', async (req, res) => {
+    const author = req.params.author;
+
+    try {
+        const response = await axios.get(booksURL);
+        const books = response.data;
+
+        const result = Object.values(books).filter(
+            book => book.author === author
+        );
+
+        res.json(result);
+    } catch {
+        res.status(500).json({ message: "Error fetching books" });
+    }
 });
 
-// Get all books based on title
-public_users.get('/title/:title',function (req, res) {
-  //Write your code here
-  return res.status(300).json({message: "Yet to be implemented"});
-});
+// Get books by Title (async)
+public_users.get('/title/:title', async (req, res) => {
+    const title = req.params.title;
 
-//  Get book review
-public_users.get('/review/:isbn',function (req, res) {
-  //Write your code here
-  return res.status(300).json({message: "Yet to be implemented"});
-});
+    try {
+        const response = await axios.get(booksURL);
+        const books = response.data;
 
-module.exports.general = public_users;
+        const result = Object.values(books).filter(
+            book => book.title === title
+        );
+
+        res.json(result);
+    } catch {
+        res.status(500).json({ message
